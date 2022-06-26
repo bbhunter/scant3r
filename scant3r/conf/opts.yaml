@@ -1,3 +1,14 @@
+url:
+  - option:
+    - '-u'
+    - '--url'
+  - type: string
+  - default: ''
+  - save_content: true
+  - help: "Your target URL"
+  - exec: "dict_args['url'] = value"
+
+
 exit_after:
   - option: 
     - '-e'
@@ -18,6 +29,7 @@ callback_time:
   - save_content: true
   - help: "Callback timeout"
   - exec: "dict_args['callback_time'] = int(value)"
+
 convert_body:
   - option:
     - "-c"
@@ -105,7 +117,7 @@ methods:
     - '-M'
     - '--method'
   - type: string
-  - default: 'GET,POST'
+  - default: 'GET'
   - save_content: true
   - help: 'Methods Allowed on your target'
   - exec: | 

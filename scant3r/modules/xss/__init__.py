@@ -1,5 +1,5 @@
 import re
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from parsel import Selector
 from rich.syntax import Syntax
@@ -11,7 +11,6 @@ from scant3r.core.utils import (
     dump_response,
     insert_to_params_urls,
     random_str,
-    urlencoder,
 )
 from scant3r.modules.scan import Scan
 
@@ -19,8 +18,19 @@ from .payload_gen import XSS_PAYLOADS
 
 
 class Main(Scan):
-    def __init__(self, opts: Dict[str, Any], http: httpSender):
-        super().__init__(opts, http, "scanning")
+    def __init__(
+        self,
+        http: httpSender,
+        methods: List[str],
+        url: str,
+        convert_body: bool = False,
+        **_,
+    ):
+        self.opts = {
+            "url": url,
+            "methods": methods,
+        }
+        super().__init__(http, "scanner", convert_body)
 
     def start(self) -> Dict[str, str]:
         report = {
@@ -61,17 +71,10 @@ class Main(Scan):
                                             "url": response.url,
                                             "request": dump_request(response),
                                             "response": dump_response(response),
-                                            "payload": urlencoder(payload),
+                                            "payload": payload,
                                             "matching": payload_search,
                                         }
                                     )
-                                    report_msg = [
-                                        "\n",
-                                        ":fire: Reflected Cross-site scripting",
-                                        f":dart: The Effected URL: {response.url}",
-                                        f":page_facing_up: XSS Location: {xss_location.value}",
-                                        f":syringe: The Used Payload: [bold red] {urlencoder(payload)} [/bold red]",
-                                    ]
                                     the_location = ""
                                     for m in re.finditer(payload, raw_response):
                                         length = (m.end() + m.start()) - len(
@@ -88,7 +91,15 @@ class Main(Scan):
                                                 raw_response[m.start() : m.end()],
                                                 "html",
                                             )
-                                    report_msg.append(the_location)
-                                    self.show_report(*report_msg)
+                                    self.show_report(
+                                        *(
+                                            "\n",
+                                            ":fire: Reflected Cross-site scripting",
+                                            f":dart: The Effected URL: {response.url}",
+                                            f":page_facing_up: XSS Location: {xss_location.value}",
+                                            f":syringe: The Used Payload: [bold red] {payload} [/bold red]",
+                                            the_location,
+                                        )
+                                    )
                                     break
         return report
